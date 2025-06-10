@@ -184,19 +184,33 @@ local function spawnSaved()
 end
 
 hook.Add('InitPostEntity', 'BankRS_SpawnVaults', function()
-	http.Fetch('https://dl.dropboxusercontent.com/s/90pfxdcg0mtbumu/bankVersion.txt', 
-		function(version)   
-	        if version > '1.8.4' then 
-			    MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Outdated version detected, please update.\n')
-			end
-		end,
-	    function(error)
-		    MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Failed to check for updates! ('..error..')\n')
-	    end
-	)
+    local function checkVersion()
+        if not http or not http.Fetch then
+            MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Unable to check for updates - HTTP not available\n')
+            return
+        end
+        
+        http.Fetch('https://dl.dropboxusercontent.com/s/90pfxdcg0mtbumu/bankVersion.txt', 
+            function(body, size, headers, code)   
+                if code == 200 and body then
+                    if body > '1.8.4' then 
+                        MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Outdated version detected, please update.\n')
+                    end
+                else
+                    MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Failed to check for updates - Invalid response\n')
+                end
+            end,
+            function(error)
+                MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Failed to check for updates: '..error..'\n')
+            end
+        )
+    end
 
-	spawnSaved()
+    pcall(checkVersion)
+    
+    spawnSaved()
 end)
+
 
 hook.Add('PostCleanupMap', 'BankRS_RespawnVaults', function()
 	MsgC(Color(255, 0, 0), '[BankRS] ', Color(255, 255, 0), 'Cleanup detected! Attempting to respawn vaults...\n')
